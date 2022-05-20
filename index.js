@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 	serverApi: ServerApiVersion.v1
 });
 
-function verify(req, res, next) {
+function verifyJWT(req, res, next) {
 	const authHeader = req.headers.authorization;
 	if (!authHeader) {
 		return res.status(401).send({
@@ -52,7 +52,7 @@ async function run() {
 		const cartCollection = client.db("redonions").collection("carts");
 		const blogCollection = client.db("redonions").collection("blogs");
 
-		// AUTH Token by Email
+		// AUTH User Token by Email
         app.put('/signin/:email', async (req, res) => {
 			const email = req.params.email;
 			const user = req.body;
@@ -62,7 +62,7 @@ async function run() {
 				$set: {...user},
 			};
 			const result = await userCollection.updateOne(filter, updateUser, options);
-			const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+			const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, /*{ expiresIn: '1h' }*/)
 			res.send({ result, token });
 
         })
@@ -72,6 +72,25 @@ async function run() {
 			const users = await userCollection.find().toArray();
 			res.send(users);
 		});
+
+		// Make admin by Email
+        app.put('/user/admin/:email', async (req, res) => {
+			const email = req.params.email;
+			const filter = { email: email };
+			const updateAdmin = {
+				$set: { role: 'admin' },
+			};
+			const result = await userCollection.updateOne(filter, updateAdmin);
+			res.send(result);
+        })
+
+		// Get All Admin
+		app.get('/admin/:email', async (req, res) => {
+			const email = req.params.email;
+			const user = await userCollection.findOne({ email: email });
+			const isAdmin = user.role === 'admin';
+			res.send({ admin: isAdmin })
+		})
 
 
 	} catch (error) {
