@@ -52,6 +52,18 @@ async function run() {
 		const cartCollection = client.db("redonions").collection("carts");
 		const blogCollection = client.db("redonions").collection("blogs");
 
+		// =======Admin Verify========
+		const verifyAdmin = async (req, res, next) => {
+		const userEmail = req.decoded.email;
+		const userAccount = await userCollection.findOne({ email: userEmail });
+		if (userAccount.role === 'admin') {
+			next();
+		}
+		else {
+			res.status(403).send({ message: 'forbidden' });
+		}
+		}
+
 		// AUTH User Token by Email
         app.put('/signin/:email', async (req, res) => {
 			const email = req.params.email;
@@ -74,7 +86,7 @@ async function run() {
 		});
 
 		// Make admin by Email
-        app.put('/user/admin/:email', async (req, res) => {
+        app.put('/admin/:email',verifyJWT, verifyAdmin, async (req, res) => {
 			const email = req.params.email;
 			const filter = { email: email };
 			const updateAdmin = {
@@ -88,8 +100,16 @@ async function run() {
 		app.get('/admin/:email', async (req, res) => {
 			const email = req.params.email;
 			const user = await userCollection.findOne({ email: email });
-			const isAdmin = user.role === 'admin';
+			const isAdmin = user?.role === 'admin';
 			res.send({ admin: isAdmin })
+		})
+
+		// Delete User
+		app.delete('/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+			const email = req.params.email;
+			const filter = { email: email };
+			const result = await userCollection.deleteOne(filter);
+			res.send(result);
 		})
 
 
