@@ -86,7 +86,7 @@ async function run() {
 		});
 
 		// Make admin by Email
-        app.put('/admin/:email',verifyJWT, verifyAdmin, async (req, res) => {
+        app.put('/user/admin/:email',verifyJWT, verifyAdmin, async (req, res) => {
 			const email = req.params.email;
 			const filter = { email: email };
 			const updateAdmin = {
@@ -105,7 +105,7 @@ async function run() {
 		})
 
 		// Delete User
-		app.delete('/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+		app.delete('/delete-admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
 			const email = req.params.email;
 			const filter = { email: email };
 			const result = await userCollection.deleteOne(filter);
