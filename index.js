@@ -132,9 +132,16 @@ async function run() {
 		 	const result = await categoryCollection.insertOne(category);
 		 	res.send(result);
 		 });
+		 // ====Get Categories======
+		 app.get('/categories',verifyJWT, verifyAdmin, async (req, res) => {
+		 	const query = {};
+		 	const cursor = categoryCollection.find(query);
+		 	const categories = await cursor.toArray();
+		 	res.send(categories);
+		 });
 
 		// ====Update Category======
-		app.patch('/category/:id', async (req, res)=>{
+		app.patch('/category/:id',verifyJWT, verifyAdmin, async (req, res)=>{
 			const id = req.params.id;
 			const category = req.body;
 			const filter = {_id: ObjectId(id)};
@@ -142,25 +149,19 @@ async function run() {
 			const updateCategory = {
 				$set: {...category}
 			};
-			const result = await productCollection.updateOne(filter, updateCategory, options);
+			const result = await categoryCollection.updateOne(filter, updateCategory, options);
 			res.send(result);
 		});
 
 		// ====Delete Categories======
-		app.delete('/category/:id', async (req, res) => {
+		app.delete('/category/:id',verifyJWT, verifyAdmin, async(req, res) => {
 			const id = req.params.id;
 		    const categoryId = { _id: ObjectId(id) };
 		    const result = await categoryCollection.deleteOne(categoryId);
 		    res.send(result);
 		});
 
-		// ====Get Categories======
-		app.get('/categories', async (req, res) => {
-			 const query = {};
-			const cursor = categoryCollection.find(query);
-			const categories = await cursor.toArray();
-			res.send(categories);
-		});
+	
 
 		 // ====Get Categories======
 		// Warning: This is not the proper way to query multiple collection. 
