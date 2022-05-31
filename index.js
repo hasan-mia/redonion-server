@@ -2,10 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const {
-	MongoClient,
-	ServerApiVersion
-} = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 require('dotenv').config();
 
 // middleware
@@ -133,7 +130,7 @@ async function run() {
 		 	res.send(result);
 		 });
 		 // ====Get Categories======
-		 app.get('/categories',verifyJWT, verifyAdmin, async (req, res) => {
+		 app.get('/categories', async (req, res) => {
 		 	const query = {};
 		 	const cursor = categoryCollection.find(query);
 		 	const categories = await cursor.toArray();
@@ -141,13 +138,17 @@ async function run() {
 		 });
 
 		// ====Update Category======
-		app.patch('/category/:id',verifyJWT, verifyAdmin, async (req, res)=>{
+		app.put('/category/:id', verifyJWT, verifyAdmin, async (req, res)=>{
 			const id = req.params.id;
 			const category = req.body;
 			const filter = {_id: ObjectId(id)};
 			const options ={ upsert: true };
 			const updateCategory = {
-				$set: {...category}
+				$set: {
+					title: category.title,
+					description: category.description,
+					img: category.img
+				}
 			};
 			const result = await categoryCollection.updateOne(filter, updateCategory, options);
 			res.send(result);
@@ -189,9 +190,6 @@ async function run() {
       	// });
       	// res.send(services);
     	// })
-		
-		 
-
 
 	} catch (error) {
 		console.log(error);
