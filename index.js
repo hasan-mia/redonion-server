@@ -137,7 +137,7 @@ async function run() {
         })
 
 		// Get Editor Access
-		app.get('/editor/:email', async (req, res) => {
+		app.get('/editor/:email',verifyJWT, verifyEditor, async (req, res) => {
 			const email = req.params.email;
 			const user = await userCollection.findOne({ email: email });
 			const isEditor = user?.role === 'editor';
@@ -177,11 +177,12 @@ async function run() {
 			const filter = {_id: ObjectId(id)};
 			const options ={ upsert: true };
 			const updateCategory = {
-				$set: {
-					title: category.title,
-					description: category.description,
-					img: category.img
-				}
+				$set: category
+				// $set: {
+				// 	title: category.title,
+				// 	description: category.description,
+				// 	img: category.img
+				// }
 			};
 			const result = await categoryCollection.updateOne(filter, updateCategory, options);
 			res.send(result);
@@ -192,6 +193,46 @@ async function run() {
 			const id = req.params.id;
 		    const categoryId = { _id: ObjectId(id) };
 		    const result = await categoryCollection.deleteOne(categoryId);
+		    res.send(result);
+		});
+
+
+		//==============================//
+		//		Products Controller		//
+		//==============================//
+
+		// ====Add Product======
+		 app.post('/product', verifyJWT, verifyAdmin, async (req, res) => {
+		 	const product = req.body;
+		 	const result = await productCollection.insertOne(product);
+		 	res.send(result);
+		 });
+		 // ====Get Products======
+		 app.get('/products', async (req, res) => {
+		 	const query = {};
+		 	const cursor = productCollection.find(query);
+		 	const products = await cursor.toArray();
+		 	res.send(products);
+		 });
+
+		// ====Update Product======
+		app.patch('/product/:id', verifyJWT, verifyAdmin, async (req, res)=>{
+			const id = req.params.id;
+			const product = req.body;
+			const filter = {_id: ObjectId(id)};
+			const options ={ upsert: true };
+			const updateProduct = {
+				$set: product
+			};
+			const result = await productCollection.updateOne(filter, updateProduct, options);
+			res.send(result);
+		});
+
+		// ====Delete Product======
+		app.delete('/product/:id',verifyJWT, verifyAdmin, async(req, res) => {
+			const id = req.params.id;
+		    const productId = { _id: ObjectId(id) };
+		    const result = await productCollection.deleteOne(productId);
 		    res.send(result);
 		});
 
