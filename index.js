@@ -67,6 +67,20 @@ async function run() {
 		}
 		}
 
+		//==============================//
+		//			Vairfy Editor		//
+		//==============================//
+		const verifyEditor = async (req, res, next) => {
+		const userEmail = req.decoded.email;
+		const userAccount = await userCollection.findOne({ email: userEmail });
+		if (userAccount.role === 'editor') {
+			next();
+		}
+		else {
+			res.status(403).send({ message: 'forbidden' });
+		}
+		}
+
 		// ===Create authentication Token by Email===
         app.put('/signin/:email', async (req, res) => {
 			const email = req.params.email;
@@ -111,8 +125,27 @@ async function run() {
 			res.send({ admin: isAdmin })
 		})
 
+		// Make Editor by Email
+        app.put('/user/editor/:email',verifyJWT, verifyAdmin, async (req, res) => {
+			const email = req.params.email;
+			const filter = { email: email };
+			const updateEditor = {
+				$set: { role: 'editor' },
+			};
+			const result = await userCollection.updateOne(filter, updateEditor);
+			res.send(result);
+        })
+
+		// Get Editor Access
+		app.get('/editor/:email', async (req, res) => {
+			const email = req.params.email;
+			const user = await userCollection.findOne({ email: email });
+			const isEditor = user?.role === 'editor';
+			res.send({ editor: isEditor })
+		})
+
 		// Delete User by Email
-		app.delete('/delete-admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+		app.delete('/delete-user/:email', verifyJWT, verifyAdmin, async (req, res) => {
 			const email = req.params.email;
 			const filter = { email: email };
 			const result = await userCollection.deleteOne(filter);
