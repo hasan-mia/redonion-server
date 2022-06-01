@@ -236,6 +236,46 @@ async function run() {
 		    res.send(result);
 		});
 
+
+		//==============================//
+		//		Blogs Controller		//
+		//==============================//
+
+		// ====Add Blog======
+		 app.post('/blog', verifyJWT, verifyAdmin, async (req, res) => {
+		 	const blog = req.body;
+		 	const result = await blogCollection.insertOne(blog);
+		 	res.send(result);
+		 });
+		 // ====Get Blogs======
+		 app.get('/blogs', async (req, res) => {
+		 	const query = {};
+		 	const cursor = blogCollection.find(query);
+		 	const blogs = await cursor.toArray();
+		 	res.send(blogs);
+		 });
+
+		// ====Update Blog======
+		app.patch('/blog/:id', verifyJWT, verifyAdmin, async (req, res)=>{
+			const id = req.params.id;
+			const blog = req.body;
+			const filter = {_id: ObjectId(id)};
+			const options ={ upsert: true };
+			const updateBlog = {
+				$set: blog
+			};
+			const result = await blogCollection.updateOne(filter, updateBlog, options);
+			res.send(result);
+		});
+
+		// ====Delete Product======
+		app.delete('/blog/:id',verifyJWT, verifyAdmin, async(req, res) => {
+			const id = req.params.id;
+		    const blogId = { _id: ObjectId(id) };
+		    const result = await blogCollection.deleteOne(blogId);
+		    res.send(result);
+		});
+
 	
 
 		 // ====Get Categories======
