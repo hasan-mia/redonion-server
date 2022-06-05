@@ -51,6 +51,7 @@ async function run() {
 		const categoryCollection = client.db("redonions").collection("categories");
 		const productCollection = client.db("redonions").collection("products");
 		const cartCollection = client.db("redonions").collection("carts");
+		const paymentCollection = client.db("redonions").collection("payments");
 		const blogCollection = client.db("redonions").collection("blogs");
 
 		//==============================//
@@ -236,6 +237,86 @@ async function run() {
 		    res.send(result);
 		});
 
+		//==============================//
+		//	   Cart/Order Controller	//
+		//==============================//
+
+		//=========Add Order======
+		 app.post("/order", async (req, res) => {
+            const orderItem = req.body;
+            const result = await cartCollection.insertOne(orderItem);
+            res.send(result)
+        })
+		// =========Update Order======
+		app.patch('/order/:id', verifyJWT, verifyAdmin, async (req, res)=>{
+			const id = req.params.id;
+			const order = req.body;
+			const filter = {_id: ObjectId(id)};
+			const options ={ upsert: true };
+			const updateOrder = {
+				$set: order
+			};
+			const result = await cartCollection.updateOne(filter, updateOrder, options);
+			res.send(result);
+		});
+
+		//=========Get All Order=======
+		 app.get("/orders", async (req, res) => {
+            const query = {};
+			const cursor =  cartCollection.find(query);
+			const orders = await cursor.toArray();
+            res.send(orders)
+        })
+
+		//=========Get Order by Email======
+		app.get("/myorders", verifyJWT, async (req, res) => {
+            const tokenInfo = req.headers.authorization;
+            const [email, accessToken] = tokenInfo.split(" ")
+			const decodedEmail = req.decoded.email;
+			
+            if (email === decodedEmail) {
+                const myorders = await cartCollection.find({email: email}).toArray();
+				console.log(myorders);
+                res.send(myorders);
+            }
+            else {
+                return res.status(403).send({ success: 'Forbidden Access' })
+            }
+		})
+
+		 // ====Get Signle Order=====
+		app.get('/order/:id', async(req, res) =>{
+			const id = req.params.id;
+			const query = { _id: ObjectId(id) };
+			const order = await cartCollection.findOne(query);
+			res.send(order);
+		})
+
+		// =======Update Stripe payment order======
+		app.patch('/order/:id', async(req, res) =>{
+			const id  = req.params.id;
+			const payment = req.body;
+			const filter = {_id: ObjectId(id)};
+			const updatedItem = {
+				$set: {
+				paid: true,
+				transactionId: payment.transactionId
+				}
+			}
+
+			const result = await paymentCollection.insertOne(payment);
+			const updatedOrder = await cartCollection.updateOne(filter, updatedItem);
+			res.send(updatedOrder);
+		})
+
+		 // ====Delete Order======
+		app.delete('/order/:id', async (req, res) => {
+			const id = req.params.id;
+		    const orderId = { _id: ObjectId(id) };
+		    const result = await cartCollection.deleteOne(orderId);
+		    res.send(result);
+		});
+
 
 		//==============================//
 		//		Blogs Controller		//
@@ -268,7 +349,7 @@ async function run() {
 			res.send(result);
 		});
 
-		// ====Delete Product======
+		// ====Delete Blog======
 		app.delete('/blog/:id',verifyJWT, verifyAdmin, async(req, res) => {
 			const id = req.params.id;
 		    const blogId = { _id: ObjectId(id) };
@@ -276,34 +357,6 @@ async function run() {
 		    res.send(result);
 		});
 
-	
-
-		 // ====Get Categories======
-		// Warning: This is not the proper way to query multiple collection. 
-    	// After learning more about mongodb. use aggregate, lookup, pipeline, match, group
-    	// app.get('/available', async (req, res) => {
-		// 	const date = req.query.date;
-
-		// 	// step 1:  get all categories
-		// 	const categories = await categoryCollection.find().toArray();
-
-		// 	// step 2: get the Products of that day. output: [{}, {}, {}, {}, {}, {}]
-		// 	const query = { date: date };
-		// 	const products = await productCollection.find(query).toArray();
-
-		// 	// step 3: for each service
-		// 	categories.forEach(category => {
-		// 	// step 4: find bookings for that service. output: [{}, {}, {}, {}]
-		// 	const serviceBookings = products.filter(product => book.treatment === service.name);
-		// 	// step 5: select slots for the service Bookings: ['', '', '', '']
-		// 	const bookedSlots = serviceBookings.map(book => book.slot);
-		// 	// step 6: select those slots that are not in bookedSlots
-		// 	const available = service.slots.filter(slot => !bookedSlots.includes(slot));
-		// 	//step 7: set available to slots to make it easier 
-		// 	service.slots = available;
-      	// });
-      	// res.send(services);
-    	// })
 
 	} catch (error) {
 		console.log(error);
