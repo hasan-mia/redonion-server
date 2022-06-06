@@ -5,6 +5,9 @@ const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 require('dotenv').config();
 
+// Stripe Secret Key
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -259,9 +262,9 @@ async function run() {
 			const result = await cartCollection.updateOne(filter, updateOrder, options);
 			res.send(result);
 		});
-
-		//=========Get All Order=======
-		 app.get("/orders", async (req, res) => {
+		
+		//=========Get All Orders======
+		app.get("/orders", async (req, res) => {
             const query = {};
 			const cursor =  cartCollection.find(query);
 			const orders = await cursor.toArray();
