@@ -199,8 +199,7 @@ async function run() {
 		    const result = await categoryCollection.deleteOne(categoryId);
 		    res.send(result);
 		});
-
-
+		
 		//==============================//
 		//		Products Controller		//
 		//==============================//
