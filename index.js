@@ -5,14 +5,14 @@ const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 require('dotenv').config();
 
-// Stripe Secret Key
+// ===Stripe Secret Key===
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 
-// middleware
+// ====Middleware=======
 app.use(cors());
 app.use(express.json());
-// port
-const port = process.env.PORT || 5000
+// ======Port ========
+const port = process.env.PORT || 5001
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.evg4w.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
